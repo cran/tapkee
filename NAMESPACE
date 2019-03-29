@@ -1,0 +1,6 @@
+## Export all names
+exportPattern(".")
+
+## From 'R CMD check'
+importFrom("stats", "runif")
+importFrom("utils", "read.table", "write.table")
