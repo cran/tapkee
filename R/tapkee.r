@@ -6,7 +6,7 @@ Tapkee <- function(data, method="pca", td=2, verbose=FALSE, add="", prefix="Dim"
  arg <- paste("tapkee", "-i", tmp[1], "-o", tmp[2], "-m", method, "-td", td, 
   ifelse(verbose, "--verbose", ""), add)
  system(arg)
- if (file.exists(tmp[2])) {
+ if (file.exists(tmp[2]) && file.size(tmp[2]) > 0) {
  res <- read.table(tmp[2], sep=",", comment.char="", colClasses="numeric", nrows=nrow(data))
  names(res) <- paste0(prefix, 1:length(names(res)))
  } else {

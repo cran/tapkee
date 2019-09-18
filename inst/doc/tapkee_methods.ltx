@@ -1,0 +1,636 @@
+%\VignetteIndexEntry{tapkee methods}
+%\VignetteEngine{R.rsp::tex}
+
+\documentclass[11pt]{article}
+\usepackage{amsfonts,amsmath,hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\title{\texttt{tapkee} methods}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Diffusion map}\label{diffusion-map}
+
+The diffusion map algorithm performs the following steps to embed
+feature vectors $x_1, \dots, x_N$:
+
+\begin{itemize}
+\item
+  Compute $N \times N$ gaussian kernel matrix $K$ such that
+  $$K_{i,j} = exp \left\{ - \frac{d^2(x_i,x_j)}{\omega} \right\},$$
+  where $d : X \times X \to \mathbb{R}$ is a distance function and
+  $\omega > 0$ is a width of the kernel.
+\item
+  Transform the matrix $K$ using the following equations
+  $$K_{i,j} \leftarrow \frac{K_{i,j}}{(p_i p_j)^q},$$ where
+  $p_i = \sum_{j=1}^{N} K_{j,i}$. Only $q=1$ for `standard'
+  diffusion map is currently supported. Then, recompute
+  $p_i = \sum_{j=1}^{N} K_{j,i}$ again and do
+  $$K_{i,j} \leftarrow \frac{K_{i,j}}{\sqrt{p_i p_j}}.$$
+\item
+  Construct embedding with $\dim = d$ from the solution of the
+  following partial eigenproblem $$K f = \lambda f$$ for $d+1$ largest
+  eigenvalues. Form the embedding matrix such that the $i$-th
+  coordinate ($i=1,\dots,N$) of $j$-th largest eigenvector
+  ($j=2,\dots,d+1$) corresponds to $j$-th coordinate of projected
+  $i$-th vector, normalized by $\lambda_i^t$ and the first
+  eigenvector corresponding to $\lambda_1 = 1$.
+\end{itemize}
+
+\subsection{References}\label{references}
+
+\begin{itemize}
+\tightlist
+\item
+  Coifman, R., \& Lafon, S. (2006).
+  \href{http://linkinghub.elsevier.com/retrieve/pii/S1063520306000546}{Diffusion
+  maps}
+\end{itemize}
+
+\section{Factor analysis}\label{factor-analysis}
+
+Factor analysis aims at describing how several observed variables are
+correlated to each other by means of identifying a set of unobserved
+variables, the so-called factors. Desirably, the number of factors is
+shorter than the number of observed variables.
+
+Factor analysis is an iterative algorithm. First of all the projection
+matrix is initialized randomly and the factors variance is set to the
+identity. Then, every iteration consists of the following steps:
+
+\begin{itemize}
+\item
+  Compute the regularized inverse covariance matrix of the projection.
+\item
+  Update the factors variance matrix.
+\item
+  Update the projection matrix.
+\item
+  Check for convergence using the log-likelihood of the model. If the
+  difference between the current log-likelihood and the previous
+  iteration's log-likelihood is below a threshold, then the algorithm
+  has converged.
+\end{itemize}
+
+\subsection{References}\label{references-1}
+
+\begin{itemize}
+\tightlist
+\item
+  Spearman, C. (1904).
+  \href{http://www.mendeley.com/catalog/general-intelligence-objectively-determined-measured/}{General
+  Intelligence, Objectively Determined and Measured}.
+\end{itemize}
+
+\section{Hessian Locally Linear
+Embedding}\label{hessian-locally-linear-embedding}
+
+Just like the Local Tangent Space Alignment, the Hessian Locally Linear
+Embedding algorithm is very similar to the Locally Linear Embedding
+algorithm.
+
+Given a set of feature vectors $X = \{ x_1, x_2, \dots x_N \}$ the
+HLLE algorithm proposes to perform the following steps:
+
+\begin{itemize}
+\item
+  Identify nearest neighbors. For each $x \in X$ identify its $k$
+  nearest neighbors, i.e.~a set $\mathcal{N}_x$ of $k$ feature
+  vectors such that
+  $$\arg\min_{\mathcal{N}_x} \sum_{x_n \in \mathcal{N}_x}\| x - x_n \|_2^2$$
+\item
+  Analyze hessian of each local patch. For each $x \in X$ compute the
+  Gram matrix $G$ of its neighbors such that
+  $G_{i,j} = (\mathcal{N}_x^{i} , \mathcal{N}_x^{j})$ and center
+  it. Compute its $t$ (the number of required features) eigenvectors
+  $v_1, \dots v_t$. Construct hessian approximating matrix
+  $$Y = \begin{bmatrix} 1_k & v_1 & \dots & v_t & v_1\cdot v_1 & \dots & v_1\cdot v_t & \dots \end{bmatrix},$$
+  where $\cdot : X \times X \to X$ denotes coefficient-wise product.
+  Normalize columns of the matrix $Y$ and then compute matrix
+  $$Q = Y Y^{T}$$ and put it to the sparse alignment matrix $L$
+  (initially set by zeroes) using the following procedure:
+  $$L \leftarrow L + Q.$$
+\item
+  Embedding through eigendecomposition. To obtain $t$ features
+  (coordinates) of embedded vectors solve the partial eigenproblem
+  $$L f = \lambda f,$$ for smallest eigenvalues
+  $\lambda_1, \dots, \lambda_t, \lambda_{t+1}$ and its
+  corresponding eigenvectors $f_1, \dots, f_t, f_{t+1}$. Drop the
+  smallest eigenvalue $\lambda_1 \sim 0$ (with its corresponding
+  eigenvector) and form embedding matrix such that $i$-th coordinate
+  ($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$)
+  corresponds to $j$-th coordinate of projected $i$-th vector.
+\end{itemize}
+
+\subsection{References}\label{references-2}
+
+\begin{itemize}
+\tightlist
+\item
+  Donoho, D., \& Grimes, C. (2003).
+  \href{http://www-stat.stanford.edu/~donoho/Reports/2003/HessianEigenmaps.pdf}{Hessian
+  eigenmaps: new locally linear embedding techniques for
+  high-dimensional data}
+\end{itemize}
+
+\section{Isomap}\label{isomap}
+
+The Isomap algorithm can be considered as a modification of the classic
+Multidimensional Scaling algorithm. The algorithm itself consists of the
+following steps:
+
+\begin{itemize}
+\item
+  For each feature vector $x \in X$ find $k$ its nearest neighbors
+  and construct the sparse neighborhood graph.
+\item
+  Compute squared distances matrix $D$ such as
+  $D_{i,j} = d^2(x_i,x_j)$.
+\item
+  Relax distances with shortest (so-called geodesic) distances on the
+  sparse neighborhood graph (e.g.~with Dijkstra's algorithm).
+\item
+  Center the matrix $D$ with subtracting row mean, column mean and
+  adding the grand mean. Multiply $D$ element-wise with $-0.5$.
+\item
+  Compute embedding with the $t$ eigenvectors that correspond to the
+  largest eigenvalues of the matrix $D$; normalize these vectors with
+  dividing each eigenvector by the square root of its corresponding
+  eigenvalue. Form the final embedding with eigenvectors as rows and
+  projected feature vectors as columns.
+\end{itemize}
+
+\subsection{References}\label{references-3}
+
+\begin{itemize}
+\tightlist
+\item
+  Tenenbaum, J. B., De Silva, V., \& Langford, J. C. (2000).
+  \href{http://www.robots.ox.ac.uk/~az/lectures/ml/tenenbaum-isomap-Science2000.pdf}
+  {A global geometric framework for nonlinear dimensionality reduction}
+\end{itemize}
+
+\section{Kernel Principal Component
+Analysis}\label{kernel-principal-component-analysis}
+
+The Kernel Principal Component Analysis algorithm is a generalization of
+the PCA algorithm. The algorithm performs the following steps
+
+\begin{itemize}
+\item
+  Compute the kernel matrix $K$ such that $K_{i,j} = k(x_i,x_j)$
+  where $k : X \times X \to \mathbb{R}$ is a Mercer kernel function
+  and $X$ is a set of feature vectors $\\{ x_1, x_2, \dots, x_N \\}$
+\item
+  Center the matrix $K$ with subtracting row mean, column mean and
+  adding the grand mean.
+\item
+  Compute embedding with the $t$ eigenvectors that correspond to the
+  largest eigenvalues of the matrix $D$; normalize these vectors with
+  dividing each eigenvectors with square root of its corresponding
+  eigenvalue. Form the final embedding with eigenvectors as rows and
+  projected feature vectors as columns.
+\end{itemize}
+
+\subsection{References}\label{references-4}
+
+\begin{itemize}
+\tightlist
+\item
+  Schölkopf, B., Smola, A., \& Müller, K. R. (1997). Kernel principal
+  component analysis
+\end{itemize}
+
+\section{Laplacian Eigenmaps}\label{laplacian-eigenmaps}
+
+The Laplacian Eigenmaps algorithm performs the following simple steps to
+embed given feature vectors $x_1, \dots, x_N$:
+
+\begin{itemize}
+\item
+  Identify nearest neighbors. For each $x \in X$ identify its $k$
+  nearest neighbors, i.e.~a set $\mathcal{N}_x$ of $k$ feature
+  vectors such that
+  $$\arg\min_{\mathcal{N}_x} \sum_{x_n \in \mathcal{N}_x} d(x,x_n),$$
+  where $d : X \times X \to \mathbb{R}$ is a distance function.
+\item
+  Construct weight matrix. Initially setting $N\times N$ matrix $W$
+  to zero, set
+  $$W_{i,j} = exp \left\{ - \frac{d^2(x_i,x_j)}{\tau} \right\}$$
+  iff for $i$-th vector $x_i$ neighbors set $\mathcal{N}_{x_i}$
+  contains $x_j$ and vice versa (so-called mutual neighborhood). Find
+  a diagonal matrix $D$ such that
+  $D_{i,i} = \sum_{j=1}^{N} W_{j,i}$.
+\item
+  Find embedding throught eigendecomposition. To obtain $t$ features
+  (coordinates) of embedded vectors solve the partial generalized
+  eigenproblem $$(D-W) f = \lambda D f,$$ for smallest eigenvalues
+  $\lambda_1, \dots, \lambda_t, \lambda_{t+1}$ and its
+  corresponding eigenvectors $f_1, \dots, f_t, f_{t+1}$. Drop the
+  smallest eigenvalue $\lambda_1 \sim 0$ (with the corresponding
+  eigenvector) and form embedding matrix such that $i$-th coordinate
+  ($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$)
+  corresponds to $j$-th coordinate of projected $i$-th vector.
+\end{itemize}
+
+\subsection{References}\label{references-5}
+
+\begin{itemize}
+\tightlist
+\item
+  Belkin, M., \& Niyogi, P. (2002).
+  \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.19.9400\&rep=rep1\&type=pdf}{Laplacian
+  Eigenmaps and Spectral Techniques for Embedding and Clustering}
+\end{itemize}
+
+\section{Locally Linear Embedding}\label{locally-linear-embedding}
+
+Given a set of feature vectors $X = \{ x_1, x_2, \dots x_N \}$ the
+Locally Linear Embedding algorithm proposes to perform the following
+steps:
+
+\begin{itemize}
+\item
+  Identify nearest neighbors. For each $x \in X$ identify its $k$
+  nearest neighbors, i.e.~a set $\mathcal{N}_x$ of $k$ feature
+  vectors such that
+  $$\arg\min_{\mathcal{N}_x} \sum_{x_n \in \mathcal{N}_x}\| x - x_n \|_2^2$$
+\item
+  Compute linear reconstruction weights. For each $x \in X$ compute
+  weight vector $w \in \mathbb{R}^n$ that minimizes
+  $$\| x - \sum_{i=1}^{k} w_i \mathcal{N}_x^{i} \|_2, ~~ \text{w.r.t.} ~~ \|w\|_2 = 1$$
+  where $\mathcal{N}_x^{i}$ is a $i$-th element of the set
+  $\mathcal{N}_x$. The solution of the problem stated above can be
+  found from the normalized solution of the following equation:
+  $$G w = 1_k,$$ where $G$ is a $k \times k$ matrix such that
+  $G_{i,j} = (x - \mathcal{N}_x^{i})(x - \mathcal{N}_x^{j})$ and
+  $1_k \in \mathbb{R}^k$ is a vector of all ones. Obviously, the
+  problem comes ill-posed in case $k$ gets more than dimension of
+  feature space $X$. This can be avoided with the regularization:
+  $$G \leftarrow G + \varepsilon E,$$ where $E$ is an identity matrix
+  and $\varepsilon$ is a pre-defined constant reconstruction shift
+  (usually $10^{-3}$). Once $w$ is computed it is stored into the
+  sparse alignment matrix $L$ (initially set by zero) with the
+  following procedure: $$L_{I,I} \leftarrow L_{I,I} + W,$$ where $I$
+  is a set containing indices of all element of the set
+  $\mathcal{N}_x$ and $x$ itself, $L_{I,I}$ denotes all
+  $(i,j)$ elements of the sparse matrix L such that $i,j \in I$ and
+  $$W = \begin{bmatrix} 1 & -w \\ -w^{T} & w^T w \end{bmatrix}$$.
+\item
+  Embedding through eigendecomposition. To obtain $t$ features
+  (coordinates) of embedded vectors solve the partial eigenproblem
+  $$L f = \lambda f,$$ for smallest eigenvalues
+  $\lambda_1, \dots, \lambda_t, \lambda_{t+1}$ and its
+  corresponding eigenvectors $f_1, \dots, f_t, f_{t+1}$. Drop the
+  smallest eigenvalue $\lambda_1 \sim 0$ (with the corresponding
+  eigenvector) and form embedding matrix such that $i$-th coordinate
+  ($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$)
+  corresponds to $j$-th coordinate of projected $i$-th vector.
+\end{itemize}
+
+\section{Locally Linear Embedding}\label{locally-linear-embedding-1}
+
+The Locally Linear Embedding algorithm can be generalized for spaces
+with defined dot product function $k(x,y)$ (so-called
+\href{http://en.wikipedia.org/wiki/Reproducing_kernel_Hilbert_space}{RKHS})
+in the elegant way. Using the following equation
+$$|| x - y||_2^2 = (x,x) - 2 (x,y) + (y,y)$$ we may transform the
+nearest neighbors problem to the following form:
+$$\arg\min_{\mathcal{N}_x} \sum_{x_n \in \mathcal{N}_x} 
+\left[ k(x,x) - 2 k(x,x_n) + k(x_n, x_n) \right] .$$
+The matrix $G$ can be formulated in terms of dot product as well. To
+find $G$ using only dot products we can compute the Gram matrix $K$
+such that $K_{i,j} = k(x_i, x_j)$ and center it using the matrix
+$C_k = E_k - \frac{1}{k} 1 1^{T}$: $$G = K C_k K.$$ There is an
+efficient way to compute that - it is can be done with subtracting a
+column mean of $K$ from each column of $K$, subtracting a row mean
+of $K$ from each row of $K$ and adding the grand mean of all
+elements of $K$ to $K$.
+
+\subsection{References}\label{references-6}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{http://www.cs.nyu.edu/~roweis/lle/}{Sam Roweis' page on LLE}
+\item
+  Saul, L. K., Ave, P., Park, F., \& Roweis, S. T. (2001).
+  \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.123.7319\&rep=rep1\&type=pdf}{An
+  introduction to Locally Linear Embedding}
+\item
+  Zhao, D. (2006)
+  \href{http://linkinghub.elsevier.com/retrieve/pii/S0031320306002160}{Formulating
+  LLE using alignment technique}
+\end{itemize}
+
+\section{Linear Local Tangent Space
+Alignment}\label{linear-local-tangent-space-alignment}
+
+The Linear Local Tangent Space Alignment is a modification of the LTSA
+algorithm. Main difference (just like in NPE and LLE) of linear and
+original LTSA methods lies in the way of constructing embedding. Instead
+of solving common for LLE and LTSA eigenproblem, LLTSA requires solving
+the following generalized eigenproblem: $$R L R^T f = \lambda R R^T f,$$
+where $R$ is a matrix containing all feature vectors
+$x_1, \dots, x_N$ row-wise. The problem is solved for smallest
+eigenvalues $\lambda_1 \leq \lambda_2 \leq \dots \leq \lambda_t$
+and its corresponding eigenvectors $f_1, \dots, f_t$. To find final
+embedding LLTSA forms a matrix such that $i$-th coordinate
+($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$) corresponds
+to $j$-th coordinate of projected $i$-th vector.
+
+\subsection{References}\label{references-7}
+
+\begin{itemize}
+\tightlist
+\item
+  Zhang, T., Yang, J., Zhao, D., \& Ge, X. (2007).
+  \href{http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.85.2698}{Linear
+  local tangent space alignment and application to face recognition}
+\end{itemize}
+
+\section{Locality Preserving
+Projections}\label{locality-preserving-projections}
+
+The Locality Preserving Projections algorithm can be viewed as a linear
+approximation of the Laplacian Eigenmaps algorithm. It reproduces first
+two steps of the Laplacian Eigenmaps and the difference lies in the step
+3. To obtain $t$ features (coordinates) of embedded vectors LPP solves
+the partial generalized eigenproblem
+$$R (D-W) R^{T} f = \lambda R D R^{T} f,$$ where $R$ contains all
+feature vectors row-wise, for smallest eigenvalues
+$\lambda_1, \dots, \lambda_t, \lambda_{t+1}$ and its corresponding
+eigenvectors $f_1, \dots, f_t, f_{t+1}$. Drop the smallest
+eigenvalue $\lambda_1 \sim 0$ (with the corresponding eigenvector)
+and form embedding matrix such that $i$-th coordinate
+($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$) corresponds
+to $j$-th coordinate of projected $i$-th vector.
+
+\subsection{References}\label{references-8}
+
+\begin{itemize}
+\tightlist
+\item
+  He, X., \& Niyogi, P. (2003).
+  \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.7147\&rep=rep1\&type=pdf}{Locality
+  Preserving Projections}
+\end{itemize}
+
+\section{Local Tangent Space
+Alignment}\label{local-tangent-space-alignment}
+
+The Local Tangent Space Alignment algorithm is pretty similar to the
+Locally Linear Embedding algorithm.
+
+Given a set of feature vectors $X = \{ x_1, x_2, \dots x_N \}$ the
+Local Tangent Space Alignment algorithm performs the following steps:
+
+\begin{itemize}
+\item
+  Identify nearest neighbors. For each $x \in X$ identify its $k$
+  nearest neighbors, i.e.~a set $\mathcal{N}_x$ of $k$ feature
+  vectors such that
+  $$\arg\min_{\mathcal{N}_x} \sum_{x_n \in \mathcal{N}_x}\| x - x_n \|_2^2$$
+\item
+  Perform principal component analysis of each local neighborhood patch.
+  For each $x \in X$ compute the Gram matrix $G$ of its neighbors
+  such that $G_{i,j} = (\mathcal{N}_x^{i} , \mathcal{N}_x^{j})$ and
+  center it. Compute its $t$ (the number of required features)
+  eigenvectors and store it in the matrix $V$. Compute matrix
+  $$Q = \begin{bmatrix} 1_k & V \end{bmatrix} \begin{bmatrix} 1_k \\ V \end{bmatrix}$$
+  and put it to the sparse alignment matrix $L$ (initially set by
+  zeroes) using the following procedure: $$L \leftarrow L + E_k - Q.$$
+\item
+  Embedding through eigendecomposition. To obtain $t$ features
+  (coordinates) of embedded vectors solve the partial eigenproblem
+  $$L f = \lambda f,$$ for smallest eigenvalues
+  $\lambda_1, \dots, \lambda_t, \lambda_{t+1}$ and its
+  corresponding eigenvectors $f_1, \dots, f_t, f_{t+1}$. Drop the
+  smallest eigenvalue $\lambda_1 \sim 0$ (with the corresponding
+  eigenvector) and form embedding matrix such that $i$-th coordinate
+  ($i=1,\dots,N$) of $j$-th eigenvector ($j=1,\dots,t$)
+  corresponds to $j$-th coordinate of projected $i$-th vector.
+\end{itemize}
+
+\section{Kernel Local Tangent Space
+Alignment}\label{kernel-local-tangent-space-alignment}
+
+Like the Locally Linear Embedding algorithm, LTSA allows generalization
+for Mercer kernel functions. Nearest neighbors computation in KLTSA is
+identical to one in KLTSA and the matrix $G$ in the step 2 is
+naturally replaced with matrix
+$K_{i,j} = k(\mathcal{N}_x^{i},\mathcal{N}_x^{j})$.
+
+\subsection{References}\label{references-9}
+
+\begin{itemize}
+\tightlist
+\item
+  Zhang, Z., \& Zha, H. (2002).
+  \href{http://arxiv.org/abs/cs/0212008}{Principal Manifolds and
+  Nonlinear Dimension Reduction via Local Tangent Space Alignment}
+\end{itemize}
+
+\section{Classic multidimensional
+scaling}\label{classic-multidimensional-scaling}
+
+The classic multidimensional scaling algorithm is probably the simplest
+dimensionality reduction algorithm which reduced data in an attempt to
+keep pairwise distances the same. The algorithm itself is:
+
+\begin{itemize}
+\item
+  For a given set of vectors $X = x_1, x_2, \dots, x_N$ compute the
+  pairwise distances matrix $D$ such that $D_{i,j} = d(x_i,x_j)$,
+\item
+  Square each element of the distances matrix $D$ and center the
+  matrix with subtracting row mean, column mean and adding the grand
+  mean.
+\item
+  Compute embedding with the $t$ eigenvectors that correspond to the
+  largest eigenvalues of the matrix $D$; normalize these vectors with
+  dividing each eigenvectors with square root of its corresponding
+  eigenvalue. Form the final embedding with eigenvectors as rows and
+  projected feature vectors as columns.
+\end{itemize}
+
+\section{Neighborhood Preserving
+Embedding}\label{neighborhood-preserving-embedding}
+
+The Neighborhood Preserving Embedding (NPE) algorithm can be considered
+as a linear approximation of the Locally Linear Embedding algorithm.
+Thus most of computation routines can be shared with LLE. The NPE
+algorithm uses steps 1 and 2 of the Locally Linear Embedding and the
+main difference lies in the eigendecomposition based embedding.
+
+According to the NPE algorithm embedding can be found from the solution
+of the following partial generalized eigenproblem:
+$$R L R f = \lambda R R^T f$$ where $R$ is a matrix containing all
+feature vectors $x_1 , \dots , x_N$ row-wise. The problem is solved
+for smallest eigenvalues $\lambda_1, \dots, \lambda_t$ and its
+corresponding eigenvectors $f_1, \dots, f_t$. The final embedding is
+obtained with a matrix such that $i$-th coordinate ($i=1,\dots,N$)
+of $j$-th eigenvector ($j=1,\dots,t$) corresponds to $j$-th
+coordinate of projected $i$-th vector.
+
+References
+
+\begin{itemize}
+\tightlist
+\item
+  He, X., Cai, D., Yan, S., \& Zhang, H.-J. (2005).
+  \href{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=1544858}{Neighborhood
+  preserving embedding}
+\end{itemize}
+
+\section{Principal Component
+Analysis}\label{principal-component-analysis}
+
+The Principal Component Analysis is probably the oldest dimension
+reduction algorithm which comes in various flavours today. The simplest
+`version' of the PCA algorithm could look like that:
+
+\begin{itemize}
+\item
+  Subtract mean feature vector from each feature vector of a set
+  $X = \{ x_1, x_2, \dots, x_N \}$.
+\item
+  Compute the covariance matrix $C$ using all feature vectors.
+\item
+  Find top $t$ (desired dimension of embedded space) and form
+  projection matrix $P$ with eigenvectors as columns.
+\item
+  Project the data with $Y = P X$.
+\end{itemize}
+
+\section{Random projection}\label{random-projection}
+
+The Random projection algorithm is yet more simple algorithm (comparing
+to PCA and MDS). It can be said that the algorithm is based on
+Johnson-Lindenstrauss lemma that states that a small number of vectors
+in high-dimensional space can be embedded into a space of much lower
+dimension with keeping pairwise distances nearly preserved. The
+algorithm itself is:
+
+\begin{itemize}
+\item
+  Construct random basis matrix $P$ with normalized random gaussian
+  vectors as columns.
+\item
+  Project data with left multiplication with generated matrix
+  $Y = P X$.
+\end{itemize}
+
+\section{Stochastic Proximity
+Embedding}\label{stochastic-proximity-embedding}
+
+Stochastic Proximity Embedding (SPE) acts on a set of
+$N$ vectors $Y = \{ y_1, y_2, \dots y_N \}$ with corresponding
+symmetric distance matrix $D_{ij}$ in the following manner:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Choose an initial learning rate $\lambda$.
+\item
+  Initialize randomly the point coordinates in the embedded space
+  $X = \{ x_1, x_2, \dots x_N \}$.
+\item
+  Select at random a pair of points with indices $i$ and $j$. For a
+  prescribed number of iterations $S$, compute their distances in the
+  embedded space, $$d_{i,j} = \| x_i - x_j \|$$; if
+  $d_{i,j} \neq D_{i,j}$ then update the coordinates of the selected
+  points by
+  $$x_i \leftarrow x_i + \lambda \frac{1}{2} \frac{D_{ij} - d_{ij}}{d_{ij} + \epsilon} (x_i - x_j),$$
+  $$x_j \leftarrow x_j + \lambda \frac{1}{2} \frac{D_{ij} - d_{ij}}{d_{ij} + \epsilon} (x_j - x_i).$$
+\item
+  Decrease the learning rate $\lambda$ by
+  $\delta \lambda | 0 < \delta < 1$. $\lambda$ is decreased to avoid
+  oscillatory behaviour.
+\item
+  Repeat steps 3 and 4 for a predetermined number of iterations $C$.
+\end{enumerate}
+
+SPE is an interesting method because of its simplicity and efficiency,
+as it scales linearly with the sample size $N$.
+
+\subsection{Reference}\label{reference}
+
+\begin{itemize}
+\tightlist
+\item
+  D. K. Agrafiotis. ``Stochastic Proximity Embedding,'' \emph{Journal of
+  Computational Chemistry}, 2003.
+\end{itemize}
+
+\section{Stochastic Neighbour
+Embedding}\label{stochastic-neighbour-embedding}
+
+Stochastic Neighbour Embedding (SNE) uses conditional probability
+densities in order to model pairwise similarities between data points,
+rather than using Euclidean distances directly. The similarity of the
+point $x_j$ to the point $x_i$ is the conditional probability
+$p_{j|i}$, which is the probability that $x_j$ would be $x_i$'s
+neighbour taking into account that neighbourhoods are built in
+proportion to Gaussian probability densities centered at $x_{i}$.
+Formally,
+$$p_{j|i} = \frac{exp(-\|x_i - x_j\|^2 / 2 \sigma_i^2)}{\sum_{k \neq i} exp(-\|x_i - x_k\|^2 / 2 \sigma_i^2)}$$
+where $\sigma_i$ is the variance of the Gaussian centered on
+$x_i$, whose computation will be later explained. The similarities in
+the low-dimensional space are defined in a similar way. However, the
+variance of the Gaussian distributions employed are fixed to
+$\frac{1}{\sqrt{2}}$ this time, i.e.
+$$q_{j|i} = \frac{exp(-\|x_i - x_j\|^2)}{\sum_{k \neq i} exp(-\|x_i - x_k\|^2)}.$$
+
+Intuitively, if the low-dimensional points $Y_i$ and $Y_j$ map
+correctly the similarity between their high-dimensional counterparts
+$x_i$ and $x_j$, then $p_{j|i}$ and $q_{j|i}$ will be close
+to each other. SNE aims at making these quantities as close as possible
+minimizing the sum of Kullback-Leibler divergences over all the data
+set. Thus, the cost function is
+$$C = \sum_{i} KL(P_i \| Q_i) = \sum_{i} \sum_{j} p_{j|i} \log \frac{p_{j|i}}{q_{j|i}}.$$
+
+Unfortunately, there exists no optimal value of the Gaussian variance
+for all the points in the data set since the data may vary considerably
+throughout the data set. SNE chooses the value of each $sigma_i$
+performing binary search so that a user specified value for the Shannon
+entropy of $P_i$ is achieved.
+
+\section{t-Distributed Stochastic Neighbour
+Embedding}\label{t-distributed-stochastic-neighbour-embedding}
+
+There are two main issues related to SNE that t-Distributed Stochastic
+Neighbour Embedding (t-SNE) addresses:
+
+\begin{itemize}
+\item
+  SNE's cost function using gradient descent is faster optimized using
+  symmetric similarities. Therefore, t-SNE uses joint probability
+  distributions $p_{ij}$ and $q_{ij}$ instead of conditional
+  distributions.
+\item
+  t-SNE uses Student's t instead of Gaussian distributions to handle
+  better the so-called crowding problem.
+\end{itemize}
+
+\subsection{References}\label{references-10}
+
+\begin{itemize}
+\tightlist
+\item
+  Van der Maaten, L., Hinton, G. (2008).
+  \href{http://jmlr.csail.mit.edu/papers/v9/vandermaaten08a.html}{Visualizing
+  Data using t-SNE}. 3
+\end{itemize}
+
+\end{document}

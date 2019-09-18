@@ -14,7 +14,8 @@ Gen.dr.data(type, N=1000)
 }
 
 \details{
-'Gen.dr.data()' generates typical 3D data. Formulas taken partly from 'tapkee' 'borsch' script and partly from Python 'scikit-learn'.
+'Gen.dr.data()' generates typical 3D data.
+Formulas taken partly from 'tapkee' 'borsch' script and partly from Python 'scikit-learn'.
 }
 
 % \value{}

@@ -1,3 +1,3 @@
-[Probably handle other types of 'tapkee' output files]
+[Handle other types of 'tapkee' output files]
 
-[Probably integrate 'tapkee' methods descriptions as vignette or as "tapkee.Rd"]
+[Use 'sum(!is.nan(matrix)) == 0' to check if tapkee returned NaNs]
