@@ -1,7 +1,13 @@
-tapkee 1.1: 'tapkee_methods' vignette added;
+tapkee 1.2:
+ examples improved;
+ suggested packages are now used conditionally (rgl does not work on new macOS processors).
+
+tapkee 1.1:
+ 'tapkee_methods' vignette added;
  improvements in examples;
  Tapkee() checks also for the empty input file;
  new 'package?tapkee' help file with installation instructions
 
-tapkee 1.0: first release
+tapkee 1.0:
+ first release
 

@@ -1,3 +1,4 @@
-[Handle other types of 'tapkee' output files]
+Use 'sum(!is.nan(matrix)) == 0' to check if tapkee returned NaNs
 
-[Use 'sum(!is.nan(matrix)) == 0' to check if tapkee returned NaNs]
+Think how to handle other types of 'tapkee' output files
+

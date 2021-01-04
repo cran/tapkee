@@ -83,13 +83,12 @@ TM <- c(
 "ms") # 19) manifold_sculpting (ms)
 
 ## Iris example
-oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1))
+oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1), xaxt="n", yaxt="n")
 for (n in c(1:18)) {
 plot(Tapkee(iris[, -5], method=TM[n], add="-k 50"),
- col=iris[, 5], pch=20, main=TM[n], xlab="", ylab="", xaxt="n", yaxt="n")
+ col=iris[, 5], pch=20, main=TM[n], xlab="", ylab="")
 }
-plot(iris[, 1:2], col=iris[, 5], pch=20, main="iris[, 1:2]", xlab="", ylab="",
- xaxt="n", yaxt="n")
+plot(iris[, 1:2], col=iris[, 5], pch=20, main="iris[, 1:2]", xlab="", ylab="")
 par(oldpar)
 
 ## Generate typical 3D data
@@ -101,36 +100,42 @@ SS <- Gen.dr.data("ssphere")
 ## This will separate colors better
 COL <- rainbow(1100)[1:1000]
 
+## 3D plot (if no 'scatterplot3d' package, plots XY axes)
+T3D <- function(dat, title, col=COL) {
+ if (requireNamespace("scatterplot3d", quietly = TRUE)) {
+ scatterplot3d::scatterplot3d(dat, color=col, main=title, pch=20, xlab="", ylab="", zlab="",
+  axis=FALSE, tick.marks=FALSE, label.tick.marks=FALSE, mar=c(1, 1, 3, 1))
+} else {
+ plot(dat[, 1:2], col=col, main=paste(title, "(2D projection)"), pch=20)
+ warning("Please install 'scatterplot3d' package to see the 3D plot")
+}}
+
 ## Swiss Roll
-oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1))
+oldpar <- par(mfrow=c(4, 5))
+T3D(SR, title="Swiss Roll")
 for (n in 1:18) plot(Tapkee(SR, method=TM[n]), col=COL, pch=20, main=TM[n],
  xlab="", ylab="", xaxt="n", yaxt="n")
-scatterplot3d::scatterplot3d(SR, color=COL, pch=20, main="Swiss Roll", xlab="", ylab="", zlab="",
- axis=FALSE, tick.marks=FALSE, label.tick.marks=FALSE, mar=c(1, 1, 3, 1))
 par(oldpar)
 
 ## S-Curve
-oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1))
+oldpar <- par(mfrow=c(4, 5))
+T3D(SC, title="S-Curve")
 for (n in 1:18) plot(Tapkee(SC, method=TM[n]), col=COL, pch=20, main=TM[n],
  xlab="", ylab="", xaxt="n", yaxt="n")
-scatterplot3d::scatterplot3d(SC, color=COL, pch=20, main="S-Curve", xlab="", ylab="", zlab="",
- axis=FALSE, tick.marks=FALSE, label.tick.marks=FALSE, mar=c(1, 1, 3, 1))
 par(oldpar)
 
 ## Helix
-oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1))
+oldpar <- par(mfrow=c(4, 5))
+T3D(HX, title="Helix")
 for (n in 1:18) plot(Tapkee(HX, method=TM[n]), col=COL, pch=20,
  main=TM[n], xlab="", ylab="", xaxt="n", yaxt="n")
-scatterplot3d::scatterplot3d(HX, color=COL, pch=20, main="Helix", xlab="", ylab="", zlab="",
- axis=FALSE, tick.marks=FALSE, label.tick.marks=FALSE, mar=c(1, 1, 3, 1))
 par(oldpar)
 
 ## Severed Sphere
-oldpar <- par(mfrow=c(4, 5), mar=c(1, 1, 3, 1))
+oldpar <- par(mfrow=c(4, 5))
+T3D(SS, title="Severed Sphere", col=rainbow(nrow(SS)))
 for (n in 1:18) plot(Tapkee(SS, method=TM[n]), col=rainbow(nrow(SS)), pch=20,
  main=TM[n], xlab="", ylab="", xaxt="n", yaxt="n")
-scatterplot3d::scatterplot3d(SS, color=rainbow(nrow(SS)), pch=20, main="Severed Sphere", xlab="",
- ylab="", zlab="", axis=FALSE, tick.marks=FALSE, label.tick.marks=FALSE, mar=c(1, 1, 3, 1))
 par(oldpar)
 
 }

@@ -1,8 +1,8 @@
 Package: tapkee
 Type: Package
 Title: Wrapper for 'tapkee' Dimension Reduction Library
-Version: 1.1
-Date: 2019-09-17
+Version: 1.2
+Date: 2020-12-20
 Author: Alexey Shipunov
 Maintainer: Alexey Shipunov <dactylorhiza@gmail.com>
 Description: Wrapper for using 'tapkee' command line utility,
@@ -15,6 +15,6 @@ VignetteBuilder: R.rsp
 License: GPL (>= 2)
 LazyLoad: yes
 NeedsCompilation: no
-Packaged: 2019-09-18 07:15:55 UTC; alexey
+Packaged: 2020-12-27 13:17:58 UTC; alexey
 Repository: CRAN
-Date/Publication: 2019-09-18 07:30:02 UTC
+Date/Publication: 2021-01-04 12:00:02 UTC
